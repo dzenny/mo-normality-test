@@ -7,5 +7,9 @@ wheels/
 *.egg-info
 # My description files
 HOWTO.md
+# local files
+uv.lock
+pyproject.toml
+main.py
 # Virtual environments
 .venv

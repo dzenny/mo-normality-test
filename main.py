@@ -1,10 +1,10 @@
 import marimo
 
 __generated_with = "0.12.10"
-app = marimo.App(width="columns", app_title="normality-testing")
+app = marimo.App(width="medium", app_title="Statistical normality testing")
 
 
-@app.cell(column=0)
+@app.cell
 def _(
     ad_pvalue,
     ad_stat,
@@ -44,6 +44,103 @@ def _(
 
 
 @app.cell
+def _(
+    ad_pvalue,
+    ad_stat,
+    dp_pvalue,
+    dp_stat,
+    fmt,
+    ll_pvalue,
+    ll_stat,
+    mo,
+    res,
+    sw_pvalue,
+    sw_stat,
+):
+    ## Сводная таблица     
+    # table-layout: fixed;
+    # width: 80%
+
+    summary_html = mo.center(mo.md(f"""
+    <style>
+    .summary_table table {{
+        border-collapse: collapse;
+        border-spacing: 1px;
+        text-align: center;
+    }}
+
+    .summary_table thead, tbody, th, td {{
+        border: 1px solid #4e4e4f;;
+        padding: 5px;
+        text-align: center;
+        font-family: Times New Roman;
+        font-size: 12px;
+    }}
+    </style>
+
+    <div class="summary_table" role="region" tabindex="0">
+    <table class="summary_table">
+        <thead>
+            <tr>
+                <th style='text-align:center;border: 1px solid #4e4e4f;' colspan=2>Название критерия</th>
+                <th style='text-align:center;border: 1px solid #4e4e4f;' rowspan=2>Значение<br/>статистики</th>
+                <th style='text-align:center;border: 1px solid #4e4e4f;' rowspan=2><em>p</em>-значение</th>
+                <th style='text-align:center;border: 1px solid #4e4e4f;' colspan=2><em>H</em><sub>0</sub></th>
+                <th style='text-align:center;border: 1px solid #4e4e4f;' rowspan=2>Примечание</th>
+            </tr>
+            <tr>
+                <th style='text-align:center;border: 1px solid #4e4e4f;'>ru</th><th style='text-align:center;border: 1px solid #4e4e4f;'>en</th>
+                <th style='text-align:center;border: 1px solid #4e4e4f;'><i>α</i> = 0.05</th>
+                <th style='text-align:center;border: 1px solid #4e4e4f;'><i>α</i> = 0.01</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style='text-align:center;'>Лиллифорс</td>
+                <td style='text-align:center;'>Lillifors</td>
+                <td style='text-align:center;'>{fmt(ll_stat)}</td>
+                <td style='text-align:center;'>{fmt(ll_pvalue)}</td>
+                <td style='text-align:center;'>{res(ll_pvalue,0.05)}</td>
+                <td style='text-align:center;'>{res(ll_pvalue,0.01)}</td>
+                <td style='text-align:center;'>Тест Колмогорова-Смирнова адаптированный для нормального распределения</td>
+            </tr>
+            <tr>
+                <td style='text-align:center;'>Андерсона-Дарлинга</td>
+                <td style='text-align:center;'>Anderson-Darling</td>
+                <td style='text-align:center;'>{fmt(ad_stat)}</td>
+                <td style='text-align:center;'>{fmt(ad_pvalue)}</td>
+                <td style='text-align:center;'>{res(ad_pvalue,0.05)}</td>
+                <td style='text-align:center;'>{res(ad_pvalue,0.01)}</td>
+                <td style='text-align:center;'></td>
+            </tr>
+            <tr>
+                <td style='text-align:center;'>Шапиро-Уилки</td>
+                <td style='text-align:center;'>Shapiro-Wilk</td>
+                <td style='text-align:center;'>{fmt(sw_stat)}</td>
+                <td style='text-align:center;'>{fmt(sw_pvalue)}</td>
+                <td style='text-align:center;'>{res(sw_pvalue,0.05)}</td>
+                <td style='text-align:center;'>{res(sw_pvalue,0.01)}</td>
+                <td style='text-align:center;'></td>
+            </tr>
+            <tr>
+                <td style='text-align:center;'>Д'Агостино-Пирсона</td>
+                <td style='text-align:center;'>D'Agostino-Pearson</td>
+                <td style='text-align:center;'>{fmt(dp_stat)}</td>
+                <td style='text-align:center;'>{fmt(dp_pvalue)}</td>
+                <td style='text-align:center;'>{res(dp_pvalue,0.05)}</td>
+                <td style='text-align:center;'>{res(dp_pvalue,0.01)}</td>
+                <td style='text-align:center;'></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+    """))
+
+    #summary_html
+    return (summary_html,)
+
+
+@app.cell
 def _():
     import marimo as mo
     import math
@@ -61,16 +158,19 @@ def _(alt, df, mo, pd):
         .mark_bar()
         .encode(alt.X('x:Q', bin=True), y='count()')
     )
+
     chart2 = (alt.Chart(df, width=200, height=200, title='Q-Q plot')
         .transform_quantile('x', step=0.1, as_=['p', 'v'])
         .transform_calculate(normal='quantileNormal(datum.p)')
         .mark_circle()      
         .encode(alt.Y('p:Q'), alt.X('normal:Q'))
     )
+
     chart3 = (alt.Chart(pd.DataFrame({'x': [-2,2], 'y': [0,1]}), width=200, height=200)
         .mark_line()
         .encode(alt.X('x:Q'), alt.Y('y:Q'))
     )
+
     chart4 = (alt.Chart(df, width=200, height=200)
         .mark_tick()      
         .encode(
@@ -213,7 +313,7 @@ def _(data, np, sm, stats):
     )
 
 
-@app.cell(column=1)
+@app.cell
 def _(mo):
     intro_why = mo.md('''
     Широкий круг статистических методов требуют для корректной работы проверки нормальности распределения:
@@ -332,99 +432,7 @@ def _(A, A_кр, E, E_кр, cold, m_A, m_E, md_table, mo, n, s, t_A, t_E):
     return Плохинский, Пустыльник
 
 
-@app.cell
-def _(
-    ad_pvalue,
-    ad_stat,
-    dp_pvalue,
-    dp_stat,
-    fmt,
-    ll_pvalue,
-    ll_stat,
-    mo,
-    res,
-    sw_pvalue,
-    sw_stat,
-):
-    summary_html = mo.center(mo.md(f"""
-    <style>
-    .summary_table table {{
-        table-layout: fixed;
-        border-collapse: collapse;
-        border-spacing: 1px;
-        text-align: center;
-    }}
-
-    .summary_table thead, tbody, th, td {{
-        border: 1px solid #4e4e4f;;
-        padding: 5px;
-        text-align: center;
-        font-family: Times New Roman;
-        font-size: 12px;
-    }}
-    </style>
-
-    <div class="summary_table" role="region" tabindex="0">
-    <table class="summary_table">
-        <thead>
-            <tr>
-                <th style='text-align:center;border: 1px solid #4e4e4f;' colspan=2>Название критерия</th>
-                <th style='text-align:center;border: 1px solid #4e4e4f;' rowspan=2>Значение<br/>статистики</th>
-                <th style='text-align:center;border: 1px solid #4e4e4f;' rowspan=2><em>p</em>-значение</th>
-                <th style='text-align:center;border: 1px solid #4e4e4f;' colspan=2><em>H</em><sub>0</sub></th>
-                <th style='text-align:center;border: 1px solid #4e4e4f;' rowspan=2>Примечание</th>
-            </tr>
-            <tr>
-                <th style='text-align:center;border: 1px solid #4e4e4f;'>ru</th><th style='text-align:center;border: 1px solid #4e4e4f;'>en</th>
-                <th style='text-align:center;border: 1px solid #4e4e4f;'><i>α</i> = 0.05</th>
-                <th style='text-align:center;border: 1px solid #4e4e4f;'><i>α</i> = 0.01</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td style='text-align:center;'>Лиллифорс</td>
-                <td style='text-align:center;'>Lillifors</td>
-                <td style='text-align:center;'>{fmt(ll_stat)}</td>
-                <td style='text-align:center;'>{fmt(ll_pvalue)}</td>
-                <td style='text-align:center;'>{res(ll_pvalue,0.05)}</td>
-                <td style='text-align:center;'>{res(ll_pvalue,0.01)}</td>
-                <td style='text-align:center;'>Тест Колмогорова-Смирнова адаптированный для нормального распределения</td>
-            </tr>
-            <tr>
-                <td style='text-align:center;'>Андерсона-Дарлинга</td>
-                <td style='text-align:center;'>Anderson-Darling</td>
-                <td style='text-align:center;'>{fmt(ad_stat)}</td>
-                <td style='text-align:center;'>{fmt(ad_pvalue)}</td>
-                <td style='text-align:center;'>{res(ad_pvalue,0.05)}</td>
-                <td style='text-align:center;'>{res(ad_pvalue,0.01)}</td>
-                <td style='text-align:center;'></td>
-            </tr>
-            <tr>
-                <td style='text-align:center;'>Шапиро-Уилки</td>
-                <td style='text-align:center;'>Shapiro-Wilk</td>
-                <td style='text-align:center;'>{fmt(sw_stat)}</td>
-                <td style='text-align:center;'>{fmt(sw_pvalue)}</td>
-                <td style='text-align:center;'>{res(sw_pvalue,0.05)}</td>
-                <td style='text-align:center;'>{res(sw_pvalue,0.01)}</td>
-                <td style='text-align:center;'></td>
-            </tr>
-            <tr>
-                <td style='text-align:center;'>Д'Агостино-Пирсона</td>
-                <td style='text-align:center;'>D'Agostino-Pearson</td>
-                <td style='text-align:center;'>{fmt(dp_stat)}</td>
-                <td style='text-align:center;'>{fmt(dp_pvalue)}</td>
-                <td style='text-align:center;'>{res(dp_pvalue,0.05)}</td>
-                <td style='text-align:center;'>{res(dp_pvalue,0.01)}</td>
-                <td style='text-align:center;'></td>
-            </tr>
-        </tbody>
-    </table>
-    </div>
-    """))
-    return (summary_html,)
-
-
-@app.cell(column=2, hide_code=True)
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""# Проверка нормальности распределения""")
     return
@@ -470,7 +478,7 @@ def _(mo):
     _volume = mo.ui.number(
         5, 5000,
         value=20,
-        label='или выбрать тестовую выборку объемом '    
+        label='объемом '    
     )
 
     _new_data = mo.ui.text_area(
@@ -482,6 +490,9 @@ def _(mo):
 
     what_data = mo.md("""
       {new_data}
+
+      или выбрать тестовую выборку 
+  
       {volume} {choose}
     """).batch(new_data=_new_data, volume=_volume, choose=_choose).form(submit_button_label="Выбрать")
 
@@ -491,7 +502,7 @@ def _(mo):
 
 @app.cell
 def _(mo, np, what_data):
-    mo.stop(what_data.value is None, "Выберите данные")
+    mo.stop(what_data.value is None, None)
     #print(what_data.value)
     own_data = what_data.value['new_data']
     vol = what_data.value['volume']
